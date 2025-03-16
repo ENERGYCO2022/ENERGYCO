@@ -12,39 +12,45 @@ namespace YourNamespace.Controllers
     public class ReportsController : ControllerBase
     {
         private readonly string reportServerUrl = "http://energyco/ReportServer"; // استخدم الـ Report Server URL الصحيح
-        private readonly string reportPath = "/CUSTOMERREP"; // مسار التقرير داخل SSRS
         private readonly string username = "ENERGYCO"; // اسم المستخدم لـ SSRS
         private readonly string password = "26988ENG"; // كلمة المرور لـ SSRS
 
-        [HttpGet("plc1")]
+        // إضافة معلمة `reportName` لتحديد التقرير
+        [HttpGet]
         public async Task<IActionResult> GetReport(
+            [FromQuery] string reportName, // اسم التقرير المطلوب
             [FromQuery] string startDate,
             [FromQuery] string endDate,
-            [FromQuery] string filterValue = "1", // 🔹 تعيين القيمة الافتراضية إلى 1
+            [FromQuery] string filterValue = "1", // تعيين القيمة الافتراضية
             [FromQuery] string format = "PDF")
         {
             try
             {
+                // التحقق من صحة التواريخ
                 if (!DateTime.TryParse(startDate, out DateTime startDateTime) ||
                     !DateTime.TryParse(endDate, out DateTime endDateTime))
                 {
                     return BadRequest("تنسيق التاريخ غير صحيح");
                 }
 
+                // تحديد مسار التقرير بناءً على اسم التقرير
+                string reportPath = $"/{reportName}";
+
                 using (var client = new HttpClient(new HttpClientHandler { Credentials = new NetworkCredential(username, password) }))
                 {
-                    // ✅ تعديل الرابط ليشمل `FilterValue`
+                    // بناء رابط التقرير
                     var reportUrl = $"{reportServerUrl}?{reportPath}&rs:Format={format}" +
                                     $"&StartDate={startDateTime:yyyy-MM-dd}" +
                                     $"&EndDate={endDateTime:yyyy-MM-dd}" +
-                                    $"&FilterValue={filterValue}"; // 🔹 إضافة `FilterValue`
+                                    $"&FilterValue={filterValue}";
 
+                    // طلب التقرير من خادم SSRS
                     var response = await client.GetAsync(reportUrl);
 
                     if (response.IsSuccessStatusCode)
                     {
                         var content = await response.Content.ReadAsByteArrayAsync();
-                        return File(content, "application/pdf", "CUSTOMER_REP.pdf");
+                        return File(content, "application/pdf", $"{reportName}_Report.pdf");
                     }
                     else
                     {
