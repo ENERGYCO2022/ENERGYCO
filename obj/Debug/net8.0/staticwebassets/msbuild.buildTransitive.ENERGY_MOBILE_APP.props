@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\ENERGY_MOBILE_APP.props" />
+</Project>
