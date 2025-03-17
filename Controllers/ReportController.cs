@@ -11,7 +11,6 @@ namespace YourNamespace.Controllers
     [ApiController]
     public class ReportsController : ControllerBase
     {
-        private readonly string reportServerUrl = "http://energyco:8080/ReportServer"; // استخدم الـ Report Server URL الصحيح مع المنفذ 8080
         private readonly string username = "ENERGYCO"; // اسم المستخدم لـ SSRS
         private readonly string password = "26988ENG"; // كلمة المرور لـ SSRS
 
@@ -21,6 +20,7 @@ namespace YourNamespace.Controllers
             [FromQuery] string reportName, // اسم التقرير المطلوب
             [FromQuery] string startDate,
             [FromQuery] string endDate,
+            [FromQuery] string factoryUrl, // إضافة معلمة factoryUrl لتحديد عنوان الخادم
             [FromQuery] string filterValue = "1", // تعيين القيمة الافتراضية
             [FromQuery] string format = "PDF")
         {
@@ -36,9 +36,14 @@ namespace YourNamespace.Controllers
                 // تحديد مسار التقرير بناءً على اسم التقرير
                 string reportPath = $"/{reportName}";
 
-                // استخدام المتغير PORT في البيئة لتحديد المنفذ
-                string port = Environment.GetEnvironmentVariable("PORT") ?? "8080"; // افتراض 8080 إذا لم يكن موجودًا
-                string serverUrl = $"http://energyco:{port}/ReportServer"; // تغيير URL ليشمل المنفذ الديناميكي
+                // التأكد من أن factoryUrl غير فارغ
+                if (string.IsNullOrEmpty(factoryUrl))
+                {
+                    return BadRequest("يجب تحديد عنوان الخادم (factoryUrl)"); // إذا لم يتم تمرير URL للخادم
+                }
+
+                // استخدام factoryUrl لتحديد الخادم
+                string serverUrl = $"{factoryUrl}/ReportServer"; // استخدام الـ URL المرسل من العميل
 
                 using (var client = new HttpClient(new HttpClientHandler { Credentials = new NetworkCredential(username, password) }))
                 {
