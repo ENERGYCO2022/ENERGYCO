@@ -11,7 +11,7 @@ namespace YourNamespace.Controllers
     [ApiController]
     public class ReportsController : ControllerBase
     {
-        private readonly string reportServerUrl = "http://energyco/ReportServer"; // استخدم الـ Report Server URL الصحيح
+        private readonly string reportServerUrl = "http://energyco:8080/ReportServer"; // استخدم الـ Report Server URL الصحيح مع المنفذ 8080
         private readonly string username = "ENERGYCO"; // اسم المستخدم لـ SSRS
         private readonly string password = "26988ENG"; // كلمة المرور لـ SSRS
 
@@ -36,10 +36,14 @@ namespace YourNamespace.Controllers
                 // تحديد مسار التقرير بناءً على اسم التقرير
                 string reportPath = $"/{reportName}";
 
+                // استخدام المتغير PORT في البيئة لتحديد المنفذ
+                string port = Environment.GetEnvironmentVariable("PORT") ?? "8080"; // افتراض 8080 إذا لم يكن موجودًا
+                string serverUrl = $"http://energyco:{port}/ReportServer"; // تغيير URL ليشمل المنفذ الديناميكي
+
                 using (var client = new HttpClient(new HttpClientHandler { Credentials = new NetworkCredential(username, password) }))
                 {
                     // بناء رابط التقرير
-                    var reportUrl = $"{reportServerUrl}?{reportPath}&rs:Format={format}" +
+                    var reportUrl = $"{serverUrl}?{reportPath}&rs:Format={format}" +
                                     $"&StartDate={startDateTime:yyyy-MM-dd}" +
                                     $"&EndDate={endDateTime:yyyy-MM-dd}" +
                                     $"&FilterValue={filterValue}";
